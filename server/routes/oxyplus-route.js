@@ -5,9 +5,9 @@ const OxyplusController = require('../controllers/oxyplus-controller');
 const router = express.Router();
 
 // define routes
-router.post('/create', OxyplusController.createUser);
-router.post('/update', OxyplusController.updateUser);
-router.get('/near-by/:userId', OxyplusController.findNearByDonors);
+router.post('/profile/create', OxyplusController.createUser);
+router.post('/profile/update', OxyplusController.updateUser);
+router.get('/donors/near-by/:userId', OxyplusController.findNearByDonors);
 router.get('/list/:type', OxyplusController.getDocumentsByType);
 router.get('/user/:email', OxyplusController.getUserByEmail);
 

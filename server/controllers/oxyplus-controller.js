@@ -8,8 +8,7 @@ exports.createUser = (req, res) => {
   console.log('In controller - createUser');
   const userDocument = {
     doctype: 'user',
-    firstname: req.body.firstname,
-    lastname: req.body.lastname,
+    name: req.body.name,
     mobile: req.body.mobile,
     email: req.body.email,
     address: req.body.address,
@@ -26,8 +25,7 @@ exports.updateUser = (req, res) => {
   console.log('req.body._id', req.body._id);
   OxyplusService.findDocumentById(req.body._id)
     .then((user) => {
-      user.firstname = req.body.firstname;
-      user.lastname = req.body.lastname;
+      user.name = req.body.name;
       user.mobile = req.body.mobile;
       user.email = req.body.email;
       user.address = req.body.address;
@@ -91,7 +89,7 @@ exports.findNearByDonors = (req, res) => {
         : donors;
 
       // need to sort by distance;
-      _.sortBy(filteredDonors, function(donor) { return donor.distance; });
+      _.sortBy(filteredDonors, 'distance');
 
       res.json(filteredDonors);
     });

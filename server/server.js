@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 
 // routes and api calls
 app.use('/request', requestRoutes);
-app.use('/donar', oxyplusRoutes);
+app.use('/oxyplus', oxyplusRoutes);
 app.use('/health', healthRoutes);
 app.use('/swagger', swaggerRoutes);
 
