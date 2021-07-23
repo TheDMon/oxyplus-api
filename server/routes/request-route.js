@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 // import dependencies and initialize the express router
 const express = require('express');
 const RequstController = require('../controllers/request-controller');
@@ -11,5 +12,6 @@ router.get('/active/:user_id', RequstController.hasActiveRequest);
 router.get('/list/:status', RequstController.getRequestsByStatus);
 router.get('/submitted-by-me/:userId', RequstController.findMyRequests);
 router.get('/assigned-to-me/:userId', RequstController.findAssignedRequests);
+router.get('/submitted/near-by/:userId', RequstController.findNearBySubmittedRequests);
 
 module.exports = router;

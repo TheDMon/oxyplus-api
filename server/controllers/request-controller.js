@@ -1,5 +1,7 @@
 /* eslint-disable max-len */
 const OxyplusService = require('../services/oxyplus-service');
+const CommonUtil = require('../utils/common-util');
+const _ = require('underscore');
 
 // create request
 exports.createRequest = (req, res) => {
@@ -95,16 +97,7 @@ exports.findAssignedRequests = (req, res) => {
 
   const selector = {
     doctype: 'Request',
-    $or: [
-      {
-        assignedTo: myUserId,
-      },
-      {
-        requestStatus: {
-          desc: { $eq: 'Submitted' },
-        },
-      },
-    ],
+    assignedTo: myUserId,
   };
 
   OxyplusService.findDocumentsBy(selector).then((requests) => {
@@ -112,7 +105,7 @@ exports.findAssignedRequests = (req, res) => {
       requests.forEach((request) => {
         try {
           if (user.address.location !== undefined && request.location.location !== undefined){
-            request.distance = haversine_distance(
+            request.distance = CommonUtil.haversine_distance(
               user.address.location,
               request.location.location,
             );
@@ -126,31 +119,38 @@ exports.findAssignedRequests = (req, res) => {
   });
 };
 
-// calculates distance between two points on map
-function haversine_distance(origin, destination) {
-  if (!(origin.lat && origin.lng && destination.lat && destination.lng)){
-    return;
-  }
+exports.findNearBySubmittedRequests = (req, res) => {
+  const myUserId = req.params.userId;
+  const distance = req.query.distance;
 
-  var R = 3958.8; // Radius of the Earth in miles
-  var rlat1 = origin.lat * (Math.PI / 180); // Convert degrees to radians
-  var rlat2 = destination.lat * (Math.PI / 180); // Convert degrees to radians
-  var difflat = rlat2 - rlat1; // Radian difference (latitudes)
-  var difflon =
-    (destination.lng - origin.lng) * (Math.PI / 180); // Radian difference (longitudes)
+  const selector = {
+    doctype: 'Request',
+    requestStatus: {
+      desc: { $eq: 'Submitted' },
+    },
+  };
 
-  var d =
-    2 *
-    R *
-    Math.asin(
-      Math.sqrt(
-        Math.sin(difflat / 2) * Math.sin(difflat / 2) +
-          Math.cos(rlat1) *
-            Math.cos(rlat2) *
-            Math.sin(difflon / 2) *
-            Math.sin(difflon / 2),
-      ),
-    );
-  // 1 mi = 1.609344 km
-  return d * 1.609344;
-}
+  OxyplusService.findDocumentsBy(selector).then((requests) => {
+    OxyplusService.findDocumentById(myUserId).then((user) => {
+      requests.forEach((request) => {
+        try {
+          if (user.address.location !== undefined && request.location.location !== undefined){
+            request.distance = CommonUtil.haversine_distance(
+              user.address.location,
+              request.location.location,
+            );
+          }
+        } catch (error) {
+          throw new Error(error);
+        }
+      });
+
+      const filteredRequests = distance ? requests.filter(x => x.distance <= distance) : requests;
+
+      // need to sort by distance;
+      _.sortBy(filteredRequests, function(request) { return request.distance; });
+
+      res.json(filteredRequests);
+    });
+  });
+};

@@ -1,7 +1,9 @@
-
+/* eslint-disable no-unused-vars */
 const OxyplusService = require('../services/oxyplus-service');
+const CommonUtil = require('../utils/common-util');
+const _ = require('underscore');
 
-// create donar
+// create user
 exports.createUser = (req, res) => {
   console.log('In controller - createUser');
   const userDocument = {
@@ -14,7 +16,7 @@ exports.createUser = (req, res) => {
     role: req.body.role,
   };
 
-  OxyplusService.create(userDocument).then(data => {
+  OxyplusService.create(userDocument).then((data) => {
     res.send(data);
   });
 };
@@ -23,8 +25,7 @@ exports.createUser = (req, res) => {
 exports.updateUser = (req, res) => {
   console.log('req.body._id', req.body._id);
   OxyplusService.findDocumentById(req.body._id)
-    .then(user => {
-      console.log('response', user);
+    .then((user) => {
       user.firstname = req.body.firstname;
       user.lastname = req.body.lastname;
       user.mobile = req.body.mobile;
@@ -33,21 +34,18 @@ exports.updateUser = (req, res) => {
       user.role = req.body.role;
       user.quantity = req.body.quantity;
 
-      OxyplusService.create(user).then(data => {
+      OxyplusService.create(user).then((data) => {
         res.send(data);
       });
-    }).catch(err => {
+    })
+    .catch((err) => {
       console.log(err);
     });
 };
 
-exports.getDonars = (req, res) => {
-  OxyplusService.getList().then(data => res.send(data));
-};
-
 exports.getDocumentsByType = (req, res) => {
   console.log(req.params.type);
-  OxyplusService.findByDocType(req.params.type).then(data => res.send(data));
+  OxyplusService.findByDocType(req.params.type).then((data) => res.send(data));
 };
 
 exports.getUserByEmail = (req, res) => {
@@ -55,10 +53,13 @@ exports.getUserByEmail = (req, res) => {
     email: req.params.email,
   };
 
-  OxyplusService.findDocumentsBy(selectorQuery).then(data => res.json(data));
+  OxyplusService.findDocumentsBy(selectorQuery).then((data) => res.json(data));
 };
 
-exports.findDonars = (req, res) => {
+exports.findNearByDonors = (req, res) => {
+  const userId = req.params.userId;
+  const distance = req.query.distance;
+
   const selectorQuery = {
     doctype: 'user',
     role: {
@@ -67,16 +68,32 @@ exports.findDonars = (req, res) => {
     quantity: { $gt: 0 },
   };
 
-  OxyplusService.findDocumentsBy(selectorQuery).then(data => res.json(data));
-};
+  OxyplusService.findDocumentsBy(selectorQuery).then((donors) => {
+    OxyplusService.findDocumentById(userId).then((user) => {
+      donors.forEach((donor) => {
+        try {
+          if (
+            user.address.location !== undefined &&
+            donor.address.location !== undefined
+          ) {
+            donor.distance = CommonUtil.haversine_distance(
+              user.address.location,
+              donor.address.location,
+            );
+          }
+        } catch (error) {
+          throw new Error(error);
+        }
+      });
 
-exports.findRequests = (req, res) => {
-  const selector = {
-    doctype: 'Request',
-    requestStatus: {
-      desc: { $eq: 'Submitted' },
-    },
-  };
+      const filteredDonors = distance
+        ? donors.filter((x) => x.distance <= distance)
+        : donors;
 
-  OxyplusService.findDocumentsBy(selector).then(data => res.json(data));
+      // need to sort by distance;
+      _.sortBy(filteredDonors, function(donor) { return donor.distance; });
+
+      res.json(filteredDonors);
+    });
+  });
 };
