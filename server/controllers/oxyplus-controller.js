@@ -11,12 +11,12 @@ exports.createUser = (req, res) => {
     name: req.body.name,
     mobile: req.body.mobile,
     email: req.body.email,
-    address: req.body.address,
+    location: req.body.location,
     role: req.body.role,
   };
 
   OxyplusService.create(userDocument).then((data) => {
-    res.send(data);
+    res.json(data);
   });
 };
 
@@ -28,12 +28,12 @@ exports.updateUser = (req, res) => {
       user.name = req.body.name;
       user.mobile = req.body.mobile;
       user.email = req.body.email;
-      user.address = req.body.address;
+      user.location = req.body.location;
       user.role = req.body.role;
       user.quantity = req.body.quantity;
 
       OxyplusService.create(user).then((data) => {
-        res.send(data);
+        res.json(data);
       });
     })
     .catch((err) => {
@@ -43,7 +43,7 @@ exports.updateUser = (req, res) => {
 
 exports.getDocumentsByType = (req, res) => {
   console.log(req.params.type);
-  OxyplusService.findByDocType(req.params.type).then((data) => res.send(data));
+  OxyplusService.findByDocType(req.params.type).then((data) => res.json(data));
 };
 
 exports.getUserByEmail = (req, res) => {
@@ -71,12 +71,12 @@ exports.findNearByDonors = (req, res) => {
       donors.forEach((donor) => {
         try {
           if (
-            user.address.location !== undefined &&
-            donor.address.location !== undefined
+            user.location.position !== undefined &&
+            donor.location.position !== undefined
           ) {
             donor.distance = CommonUtil.haversine_distance(
-              user.address.location,
-              donor.address.location,
+              user.location.position,
+              donor.location.position,
             );
           }
         } catch (error) {
@@ -89,9 +89,11 @@ exports.findNearByDonors = (req, res) => {
         : donors;
 
       // need to sort by distance;
-      _.sortBy(filteredDonors, 'distance');
+      const sortedData = _.sortBy(filteredDonors, function(donor) {
+        return donor.distance;
+      });
 
-      res.json(filteredDonors);
+      res.json(sortedData);
     });
   });
 };

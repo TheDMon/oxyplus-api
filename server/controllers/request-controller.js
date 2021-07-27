@@ -18,13 +18,12 @@ exports.createRequest = (req, res) => {
   };
 
   OxyplusService.create(userDocument).then((data) => {
-    res.send(data);
+    res.status(200).json(data);
   });
 };
 
 // update reqeust
 exports.updateRequest = (req, res) => {
-  console.log('req.body._id', req.body._id);
   OxyplusService.findDocumentById(req.body._id)
     .then((item) => {
       console.log('response', item);
@@ -35,7 +34,16 @@ exports.updateRequest = (req, res) => {
       item.assignedTo = req.body.assignedTo;
 
       OxyplusService.create(item).then((data) => {
-        res.send(data);
+        // if status is resolved,
+        // if followRequireFlag = true, decrease quantity, else increase by one
+        if (item.requestStatus.desc === 'Resolved'){
+          OxyplusService.findDocumentById(item.assignedTo._id).then((user) => {
+            user.quantity = item.followUpRequired ? user.quantity - 1 : user.quantity + 1;
+            OxyplusService.create(user).then((data) => {});
+          });
+        }
+
+        res.status(200).json(data);
       });
     })
     .catch((err) => {
@@ -63,7 +71,7 @@ exports.hasActiveRequest = (req, res) => {
     },
   };
 
-  OxyplusService.findDocumentsBy(selector).then((data) => res.send(data));
+  OxyplusService.findDocumentsBy(selector).then((data) => res.json(data));
 };
 
 exports.getRequestsByStatus = (req, res) => {
@@ -76,7 +84,7 @@ exports.getRequestsByStatus = (req, res) => {
     },
   };
 
-  OxyplusService.findDocumentsBy(selector).then((data) => res.send(data));
+  OxyplusService.findDocumentsBy(selector).then((data) => res.json(data));
 };
 
 exports.findMyRequests = (req, res) => {
@@ -89,7 +97,7 @@ exports.findMyRequests = (req, res) => {
     },
   };
 
-  OxyplusService.findDocumentsBy(selector).then((data) => res.send(data));
+  OxyplusService.findDocumentsBy(selector).then((data) => res.json(data));
 };
 
 exports.findAssignedRequests = (req, res) => {
@@ -97,17 +105,20 @@ exports.findAssignedRequests = (req, res) => {
 
   const selector = {
     doctype: 'Request',
-    assignedTo: myUserId,
+    assignedTo: { _id: myUserId },
   };
 
   OxyplusService.findDocumentsBy(selector).then((requests) => {
     OxyplusService.findDocumentById(myUserId).then((user) => {
       requests.forEach((request) => {
         try {
-          if (user.address.location !== undefined && request.location.location !== undefined){
+          if (
+            user.location.position !== undefined &&
+            request.location.position !== undefined
+          ) {
             request.distance = CommonUtil.haversine_distance(
-              user.address.location,
-              request.location.location,
+              user.location.position,
+              request.location.position,
             );
           }
         } catch (error) {
@@ -134,10 +145,13 @@ exports.findNearBySubmittedRequests = (req, res) => {
     OxyplusService.findDocumentById(myUserId).then((user) => {
       requests.forEach((request) => {
         try {
-          if (user.address.location !== undefined && request.location.location !== undefined){
+          if (
+            user.location.position !== undefined &&
+            request.location.position !== undefined
+          ) {
             request.distance = CommonUtil.haversine_distance(
-              user.address.location,
-              request.location.location,
+              user.location.position,
+              request.location.position,
             );
           }
         } catch (error) {
@@ -145,12 +159,16 @@ exports.findNearBySubmittedRequests = (req, res) => {
         }
       });
 
-      const filteredRequests = distance ? requests.filter(x => x.distance <= distance) : requests;
+      const filteredRequests = distance
+        ? requests.filter((x) => x.distance <= distance)
+        : requests;
 
       // need to sort by distance;
-      _.sortBy(filteredRequests, function(request) { return request.distance; });
+      const sortedData = _.sortBy(filteredRequests, function(request) {
+        return request.distance;
+      });
 
-      res.json(filteredRequests);
+      res.json(sortedData);
     });
   });
 };
