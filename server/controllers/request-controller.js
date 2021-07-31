@@ -1,12 +1,13 @@
 /* eslint-disable max-len */
 const OxyplusService = require('../services/oxyplus-service');
 const CommonUtil = require('../utils/common-util');
-const _ = require('underscore');
+const WebPushNotification = require('../utils/push-notification.util');
+;const _ = require('underscore');
 
 // create request
 exports.createRequest = (req, res) => {
   console.log('In controller - createUser');
-  const userDocument = {
+  const newRequest = {
     doctype: 'Request',
     submittedBy: req.body.submittedBy,
     submittedOn: new Date(),
@@ -17,9 +18,11 @@ exports.createRequest = (req, res) => {
     requestStatus: req.body.requestStatus,
   };
 
-  OxyplusService.create(userDocument).then((data) => {
+  OxyplusService.create(newRequest).then((data) => {
     res.status(200).json(data);
   });
+
+  WebPushNotification.sendNewRequestNotificaiton(newRequest);
 };
 
 // update reqeust
@@ -39,11 +42,17 @@ exports.updateRequest = (req, res) => {
         if (item.requestStatus.desc === 'Resolved'){
           OxyplusService.findDocumentById(item.assignedTo._id).then((user) => {
             user.quantity = item.followUpRequired ? user.quantity - 1 : user.quantity + 1;
-            OxyplusService.create(user).then((data) => {});
+            OxyplusService.create(user).then((response) => {
+              if (response.ok){
+                res.status(200).json(data);
+              } else {
+                throw new Error('error occurred while updating quantity');
+              }
+            });
           });
+        } else {
+          res.status(200).json(data);
         }
-
-        res.status(200).json(data);
       });
     })
     .catch((err) => {

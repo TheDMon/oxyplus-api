@@ -31,13 +31,15 @@ exports.updateUser = (req, res) => {
       user.location = req.body.location;
       user.role = req.body.role;
       user.quantity = req.body.quantity;
+      user.subscriptionDetails = req.body.subscriptionDetails;
 
       OxyplusService.create(user).then((data) => {
-        res.json(data);
+        res.status(200).json(data);
       });
     })
     .catch((err) => {
       console.log(err);
+      res.status(500).json({text: 'Something went wrong', errorDetails: err});
     });
 };
 
@@ -93,7 +95,7 @@ exports.findNearByDonors = (req, res) => {
         return donor.distance;
       });
 
-      res.json(sortedData);
+      res.status(200).json(sortedData);
     });
   });
 };
