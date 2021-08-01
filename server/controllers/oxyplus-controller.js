@@ -50,6 +50,7 @@ exports.getDocumentsByType = (req, res) => {
 
 exports.getUserByEmail = (req, res) => {
   const selectorQuery = {
+    doctype: 'user',
     email: req.params.email,
   };
 

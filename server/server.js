@@ -7,6 +7,7 @@ const healthRoutes = require('./routes/health-route');
 const swaggerRoutes = require('./routes/swagger-route');
 const oxyplusRoutes = require('./routes/oxyplus-route');
 const requestRoutes = require('./routes/request-route');
+const authRoutes = require('./routes/auth-route');
 
 var cors = require('cors');
 
@@ -23,6 +24,7 @@ app.use(bodyParser.json());
 // routes and api calls
 app.use('/request', requestRoutes);
 app.use('/oxyplus', oxyplusRoutes);
+app.use('/auth', authRoutes);
 app.use('/health', healthRoutes);
 app.use('/swagger', swaggerRoutes);
 

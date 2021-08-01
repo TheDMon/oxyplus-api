@@ -1,0 +1,26 @@
+POST http://localhost:3000/auth/login
+content-type: application/json
+
+{
+    "email": "dude@email.com",
+    "password": "somepassword"
+}
+
+
+###
+
+POST http://localhost:3000/auth/register
+content-type: application/json
+
+{
+    "email": "dude@email.com",
+    "password": "somepassword"
+}
+
+###
+GET http://localhost:3000/oxyplus/list/Role
+Content-Type: application/json
+
+{
+    "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNzk3MzA3ZmIwYTY2N2FmY2UxOTA5ZmRiY2U3NjIyMyIsImVtYWlsIjoiZHVkZUBlbWFpbC5jb20iLCJpYXQiOjE2Mjc3NTg1ODh9.Y-aYn78Aik21tF5p-Lb035LHO2FkS9q2FY9BFM0QEcQ"
+}
